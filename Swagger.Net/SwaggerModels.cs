@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
+using System.Text;
 using System.Web;
 using System.Web.Http.Controllers;
 using System.Web.Http.Description;
@@ -83,17 +84,27 @@ namespace Swagger.Net
                 nickname = docProvider.GetNickname(api.ActionDescriptor),
                 responseClass = docProvider.GetResponseClass(api.ActionDescriptor),
                 summary = api.Documentation,
-                notes = docProvider.GetNotes(api.ActionDescriptor) +
-                        "\n                <h4> Code Example </h4>\n                <p>" +
-                        docProvider.GetCode(api.ActionDescriptor) +
-                        "\n                <h4> Json Example </h4>\n                <p>" +
-                        docProvider.GetExamples(api.ActionDescriptor) +
-                        "\n                <h4> Web API Call Result </h4>\n                <p>" +
-                        docProvider.GetReturn(api.ActionDescriptor),
+                notes = GetNotes(api, docProvider),
                 parameters = new List<ResourceApiOperationParameter>()
             };
 
             return rApiOperation;
+        }
+
+        private static string GetNotes(ApiDescription api, XmlCommentDocumentationProvider docProvider)
+        {
+            StringBuilder sb = new StringBuilder();
+            sb.Append(docProvider.GetNotes(api.ActionDescriptor));
+            sb.AppendLine("                <h4> Code Example </h4>");
+            sb.AppendLine("                <p>");
+            sb.Append(docProvider.GetCode(api.ActionDescriptor));
+            sb.AppendLine("                <h4> Json Example </h4>");
+            sb.AppendLine("                <p>");
+            sb.Append(docProvider.GetExamples(api.ActionDescriptor));
+            sb.AppendLine("                <h4> Web API Call Result </h4>");
+            sb.AppendLine("                <p>");
+            sb.Append(docProvider.GetReturn(api.ActionDescriptor));
+            return sb.ToString();
         }
 
         /// <summary>
