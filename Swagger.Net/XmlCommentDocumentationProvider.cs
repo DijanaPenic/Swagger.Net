@@ -84,10 +84,9 @@ namespace Swagger.Net
                 XPathNavigator summaryNode = memberNode.SelectSingleNode("remarks");
                 if (summaryNode != null)
                 {
-                    var PrittifyString = "<pre style=\"border-color:rgb(229, 224, 198); white-space: pre-wrap;\">" +
-                                         summaryNode.Value + "</pre>";
+                    var PrittifyString = "<pre style=\"white-space: pre-wrap;\">" + summaryNode.Value + "</pre>";
                     var HtmlString = FormatUrls(PrittifyString);
-                    return HtmlString.Trim().Replace("\r\n            ", "\r\n");
+                    return HtmlString.Trim();
                 }
             }
 
@@ -102,8 +101,7 @@ namespace Swagger.Net
                 XPathNavigator summaryNode = memberNode.SelectSingleNode("returns");
                 if (summaryNode != null)
                 {
-                    var PrittifyString = "<pre style=\"border-color:rgb(229, 224, 198); white-space: pre-wrap;\">" +
-                                          summaryNode.Value + "</pre>";
+                    var PrittifyString = "<pre style=\" white-space: pre-wrap;\">" + summaryNode.Value + "</pre>";
                     var HtmlString = FormatUrls(PrittifyString);
                     return HtmlString.Trim().Replace("\r\n            ", "\r\n");
                 }
@@ -234,13 +232,25 @@ namespace Swagger.Net
 
             foreach (Match match in mactches)
             {
-                output = output.Replace(match.Value, "<a href='" + match.Value + "' target='blank' style = \"color:#004D51; white-space: pre-wrap;\">" + match.Value + "</a>");
+                output = UrlOutput(match, output);
             }
 
             foreach (Match match in mactches2)
             {
-                output = output.Replace(match.Value, "<a href='" + match.Value + "' target='blank' style = \"color:#004D51; white-space: pre-wrap;\">" + match.Value + "</a>");
+                output = UrlOutput(match, output);
             }
+
+            return output;
+        }
+
+        public static string UrlOutput(Match match, string output)
+        {
+            var MatchString = "<a href='" + match.Value + "' target='blank' style = \"color:#004D51; white-space: pre-wrap;\">" + match.Value + "</a>";
+            Regex Match = new Regex(MatchString, RegexOptions.IgnoreCase);
+            MatchCollection VerifyMatches = Match.Matches(output);
+
+            if (VerifyMatches.Count == 0)
+                output = output.Replace(match.Value, MatchString);
 
             return output;
         }
