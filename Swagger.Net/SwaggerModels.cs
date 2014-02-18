@@ -83,7 +83,13 @@ namespace Swagger.Net
                 nickname = docProvider.GetNickname(api.ActionDescriptor),
                 responseClass = docProvider.GetResponseClass(api.ActionDescriptor),
                 summary = api.Documentation,
-                notes = docProvider.GetNotes(api.ActionDescriptor),
+                notes = docProvider.GetNotes(api.ActionDescriptor) +
+                        "\n                <h4> Code Example </h4>\n                <p>" +
+                        docProvider.GetCode(api.ActionDescriptor) +
+                        "\n                <h4> Json Example </h4>\n                <p>" +
+                        docProvider.GetExamples(api.ActionDescriptor) +
+                        "\n                <h4> Web API Call Result </h4>\n                <p>" +
+                        docProvider.GetReturn(api.ActionDescriptor),
                 parameters = new List<ResourceApiOperationParameter>()
             };
 

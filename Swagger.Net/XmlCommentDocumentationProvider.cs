@@ -7,6 +7,11 @@ using System.Web.Http.Controllers;
 using System.Web.Http.Description;
 using System.Xml.XPath;
 
+using System.Collections.Generic;
+using System.Web.Mvc;
+
+using ColorCode;
+
 namespace Swagger.Net
 {
     /// <summary>
@@ -79,7 +84,63 @@ namespace Swagger.Net
                 XPathNavigator summaryNode = memberNode.SelectSingleNode("remarks");
                 if (summaryNode != null)
                 {
-                    return summaryNode.Value.Trim();
+                    var PrittifyString = "<pre style=\"border-color:rgb(229, 224, 198); white-space: pre-wrap;\">" +
+                                         summaryNode.Value + "</pre>";
+                    var HtmlString = FormatUrls(PrittifyString);
+                    return HtmlString.Trim().Replace("\r\n            ", "\r\n");
+                }
+            }
+
+            return "No Documentation Found.";
+        }
+
+        public virtual string GetReturn(HttpActionDescriptor actionDescriptor)
+        {
+            XPathNavigator memberNode = GetMemberNode(actionDescriptor);
+            if (memberNode != null)
+            {
+                XPathNavigator summaryNode = memberNode.SelectSingleNode("returns");
+                if (summaryNode != null)
+                {
+                    var PrittifyString = "<pre style=\"border-color:rgb(229, 224, 198); white-space: pre-wrap;\">" +
+                                          summaryNode.Value + "</pre>";
+                    var HtmlString = FormatUrls(PrittifyString);
+                    return HtmlString.Trim().Replace("\r\n            ", "\r\n");
+                }
+            }
+
+            return "No Documentation Found.";
+        }
+
+        public virtual string GetExamples(HttpActionDescriptor actionDescriptor)
+        {
+            XPathNavigator memberNode = GetMemberNode(actionDescriptor);
+            if (memberNode != null)
+            {
+                XPathNavigator summaryNode = memberNode.SelectSingleNode("example");
+                if (summaryNode != null)
+                {
+                    var result = JsonHelper.FormatJson(summaryNode.Value.Trim());
+                    string colorizedSourceCode = new CodeColorizer().Colorize(result, Languages.Sql);
+                    var HtmlString = FormatUrls(colorizedSourceCode);
+                    return HtmlString;
+                }
+            }
+
+            return "No Documentation Found.";
+        }
+
+        public virtual string GetCode(HttpActionDescriptor actionDescriptor)
+        {
+            XPathNavigator memberNode = GetMemberNode(actionDescriptor);
+            if (memberNode != null)
+            {
+                XPathNavigator CodeType = memberNode.SelectSingleNode("code");
+
+                if (CodeType != null)
+                {
+                    string colorizedSourceCode = new CodeColorizer().Colorize(CodeType.Value.Trim().Replace("\r\n       ", "\r\n"), Languages.CSharp);
+                    return colorizedSourceCode;
                 }
             }
 
@@ -96,13 +157,13 @@ namespace Swagger.Net
                     StringBuilder sb = new StringBuilder(reflectedActionDescriptor.MethodInfo.ReturnParameter.ParameterType.Name);
                     sb.Append("<");
                     Type[] types = reflectedActionDescriptor.MethodInfo.ReturnParameter.ParameterType.GetGenericArguments();
-                    for(int i = 0; i < types.Length; i++)
+                    for (int i = 0; i < types.Length; i++)
                     {
                         sb.Append(types[i].Name);
-                        if(i != (types.Length - 1)) sb.Append(", ");
+                        if (i != (types.Length - 1)) sb.Append(", ");
                     }
                     sb.Append(">");
-                    return sb.Replace("`1","").ToString();
+                    return sb.Replace("`1", "").ToString();
                 }
                 else
                     return reflectedActionDescriptor.MethodInfo.ReturnType.Name;
@@ -160,6 +221,97 @@ namespace Swagger.Net
                 return string.Format("{0}{{{1}}}", result.Groups[1].Value, result.Groups[2].Value);
             }
             return typeName;
+        }
+
+        public static string FormatUrls(string input)
+        {
+            string output = input;
+            Regex regx1 = new Regex("http(s)?://([\\w+?\\.\\w+])+([a-zA-Z0-9\\~\\!\\@\\#\\$\\%\\^\\&amp;\\*\\(\\)_\\-\\=\\+\\\\\\/\\?\\.\\:\\;\\'\\,\\{\\}]*([a-zA-Z0-9\\?\\#\\=\\/]){1})?", RegexOptions.IgnoreCase);
+            Regex regx2 = new Regex("http(s)? : //([\\w+?\\.\\w+])+([a-zA-Z0-9\\~\\!\\@\\#\\$\\%\\^\\&amp;\\*\\(\\)_\\-\\=\\+\\\\\\/\\?\\.\\:\\;\\'\\,\\{\\}]*([a-zA-Z0-9\\?\\#\\=\\/]){1})?", RegexOptions.IgnoreCase);
+
+            MatchCollection mactches = regx1.Matches(output);
+            MatchCollection mactches2 = regx2.Matches(output);
+
+            foreach (Match match in mactches)
+            {
+                output = output.Replace(match.Value, "<a href='" + match.Value + "' target='blank' style = \"color:#004D51; white-space: pre-wrap;\">" + match.Value + "</a>");
+            }
+
+            foreach (Match match in mactches2)
+            {
+                output = output.Replace(match.Value, "<a href='" + match.Value + "' target='blank' style = \"color:#004D51; white-space: pre-wrap;\">" + match.Value + "</a>");
+            }
+
+            return output;
+        }
+
+        public class JsonHelper
+        {
+            private const int INDENT_SIZE = 4;
+
+            public static string FormatJson(string str)
+            {
+                str = (str ?? "").Replace("{}", @"\{\}").Replace("[]", @"\[\]");
+
+                var inserts = new List<int[]>();
+                bool quoted = false, escape = false;
+                int depth = 0/*-1*/;
+
+                for (int i = 0, N = str.Length; i < N; i++)
+                {
+                    var chr = str[i];
+
+                    if (!escape && !quoted)
+                        switch (chr)
+                        {
+                            case '{':
+                            case '[':
+                                inserts.Add(new[] { i, +1, 0, INDENT_SIZE * ++depth });
+                                break;
+                            case ',':
+                                inserts.Add(new[] { i, +1, 0, INDENT_SIZE * depth });
+                                break;
+                            case '}':
+                            case ']':
+                                inserts.Add(new[] { i, -1, INDENT_SIZE * --depth, 0 });
+                                break;
+                            case ':':
+                                inserts.Add(new[] { i, 0, 1, 1 });
+                                break;
+                        }
+
+                    quoted = (chr == '"') ? !quoted : quoted;
+                    escape = (chr == '\\') ? !escape : false;
+                }
+
+                if (inserts.Count > 0)
+                {
+                    var sb = new System.Text.StringBuilder(str.Length * 2);
+
+                    int lastIndex = 0;
+                    foreach (var insert in inserts)
+                    {
+                        int index = insert[0], before = insert[2], after = insert[3];
+                        bool nlBefore = (insert[1] == -1), nlAfter = (insert[1] == +1);
+
+                        sb.Append(str.Substring(lastIndex, index - lastIndex));
+
+                        if (nlBefore) sb.AppendLine();
+                        if (before > 0) sb.Append(new String(' ', before));
+
+                        sb.Append(str[index]);
+
+                        if (nlAfter) sb.AppendLine();
+                        if (after > 0) sb.Append(new String(' ', after));
+
+                        lastIndex = index + 1;
+                    }
+
+                    str = sb.ToString();
+                }
+
+                return str.Replace(@"\{\}", "{}").Replace(@"\[\]", "[]");
+            }
         }
     }
 }
