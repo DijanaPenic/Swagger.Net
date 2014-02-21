@@ -86,7 +86,7 @@ namespace Swagger.Net
                 {
                     var PrittifyString = "<pre style=\"white-space: pre-wrap;\">" + summaryNode.Value + "</pre>";
                     var HtmlString = FormatUrls(PrittifyString);
-                    return HtmlString.Trim();
+                    return HtmlString.Trim().Replace("\r\n            ", "\r\n");
                 }
             }
 
@@ -120,7 +120,7 @@ namespace Swagger.Net
                 {
                     var result = JsonHelper.FormatJson(summaryNode.Value.Trim());
                     string colorizedSourceCode = new CodeColorizer().Colorize(result, Languages.Sql);
-                    var HtmlString = FormatUrls(colorizedSourceCode);
+                    var HtmlString = FormatUrls(colorizedSourceCode.Replace(";,", " ").Replace(";</span>,", " "), true);
                     return HtmlString;
                 }
             }
@@ -221,7 +221,7 @@ namespace Swagger.Net
             return typeName;
         }
 
-        public static string FormatUrls(string input)
+        public static string FormatUrls(string input, bool indent = false)
         {
             string output = input;
             Regex regx1 = new Regex("http(s)?://([\\w+?\\.\\w+])+([a-zA-Z0-9\\~\\!\\@\\#\\$\\%\\^\\&amp;\\*\\(\\)_\\-\\=\\+\\\\\\/\\?\\.\\:\\;\\'\\,\\{\\}]*([a-zA-Z0-9\\?\\#\\=\\/]){1})?", RegexOptions.IgnoreCase);
@@ -232,20 +232,28 @@ namespace Swagger.Net
 
             foreach (Match match in mactches)
             {
-                output = UrlOutput(match, output);
+                output = UrlOutput(match, output, indent);
             }
 
             foreach (Match match in mactches2)
             {
-                output = UrlOutput(match, output);
+                output = UrlOutput(match, output, indent);
             }
 
             return output;
         }
 
-        public static string UrlOutput(Match match, string output)
+        public static string UrlOutput(Match match, string output, bool indent)
         {
-            var MatchString = "<a href='" + match.Value + "' target='blank' style = \"color:#004D51; white-space: pre-wrap;\">" + match.Value + "</a>";
+            StringBuilder sb = new StringBuilder();
+            if (indent == false) 
+                sb.Append("<span style = \"word-break: break-all;\">");
+            else
+                sb.Append("<span style = \"word-break: break-all;  display:inline-block; width:650px;\">");
+
+
+            var MatchString = sb.ToString() + "<a href='" + match.Value + "' target='blank' style = \"color:#004D51; white-space: pre-wrap;\">" + match.Value + "</a> </span>";
+
             Regex Match = new Regex(MatchString, RegexOptions.IgnoreCase);
             MatchCollection VerifyMatches = Match.Matches(output);
 

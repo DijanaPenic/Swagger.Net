@@ -67,7 +67,7 @@ namespace Swagger.Net.WebApi.Controllers
         /// 
         ///     Remaining essentially unchanged. It was popularised in the 1960s with the release of Letraset sheets containing Lorem Ipsum passages, and more recently with desktop publishing software like Aldus PageMaker including versions of Lorem Ipsum.    
         /// </remarks>
-        /// <returns> This function returns Delete status (For more details please check: http://www.google.com) </returns>
+        /// <returns> This function returns status for Put Web API call (For more details please check: http://www.google.com) </returns>
         public void Put(int id, [FromBody]string value)
         {
         }
