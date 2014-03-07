@@ -6,11 +6,9 @@ using System.Text.RegularExpressions;
 using System.Web.Http.Controllers;
 using System.Web.Http.Description;
 using System.Xml.XPath;
-
 using System.Collections.Generic;
-using System.Web.Mvc;
-
 using ColorCode;
+
 
 namespace Swagger.Net
 {
@@ -28,6 +26,16 @@ namespace Swagger.Net
         {
             XPathDocument xpath = new XPathDocument(documentPath);
             _documentNavigator = xpath.CreateNavigator();
+        }
+
+        public string GetResponseDocumentation(HttpActionDescriptor actionDescriptor)
+        {
+            return null;
+        }
+
+        public string GetDocumentation(HttpControllerDescriptor controllerDescriptor)
+        {
+            return null;
         }
 
         public virtual string GetDocumentation(HttpParameterDescriptor parameterDescriptor)
@@ -74,6 +82,39 @@ namespace Swagger.Net
             }
 
             return "No Documentation Found.";
+        }
+
+        public List<ResponseMessage> GetResponseCodes(HttpActionDescriptor actionDescriptor)
+        {
+            XPathNavigator memberNode = GetMemberNode(actionDescriptor);
+            if (memberNode != null)
+            {
+                XPathNavigator responsesNode = memberNode.SelectSingleNode("responseCodes");
+                if (responsesNode != null)
+                {
+                    var responses = responsesNode.SelectChildren("response", string.Empty);
+                    if (responses.Count > 0)
+                    {
+                        var responseList = new List<ResponseMessage>();
+                        while (responses.MoveNext())
+                        {
+                            var response = responses.Current;
+                            int code;
+                            Int32.TryParse(response.SelectSingleNode("code").Value, out code);
+                            var responseMessage = new ResponseMessage()
+                            {
+                                code = code,
+                                message = response.SelectSingleNode("message").Value
+                            };
+
+                            responseList.Add(responseMessage);
+                        }
+                        return responseList;
+                    }
+                }
+
+            }
+            return null;
         }
 
         public virtual string GetNotes(HttpActionDescriptor actionDescriptor)

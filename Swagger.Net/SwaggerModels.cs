@@ -93,7 +93,9 @@ namespace Swagger.Net
 
         private static string GetNotes(ApiDescription api, XmlCommentDocumentationProvider docProvider)
         {
+            List<ResponseMessage> responseMessages = docProvider.GetResponseCodes(api.ActionDescriptor);
             StringBuilder sb = new StringBuilder();
+
             sb.Append(docProvider.GetNotes(api.ActionDescriptor));
             sb.AppendLine("                <h4> Code Example </h4>");
             sb.AppendLine("                <p>");
@@ -104,6 +106,31 @@ namespace Swagger.Net
             sb.AppendLine("                <h4> Web API Call Result </h4>");
             sb.AppendLine("                <p>");
             sb.Append(docProvider.GetReturn(api.ActionDescriptor));
+
+            if (responseMessages != null)
+            {
+                sb.AppendLine("\r\n          <div style='margin:0;padding:0;display:inline'><h4>Error Status Codes</h4>\r\n          <table class='fullwidth'>\r\n            ");
+                sb.AppendLine("<thead>\r\n            <tr>\r\n              <th>HTTP Status Code</th>\r\n              <th>Reason</th>\r\n            </tr>\r\n            </thead>\r\n            ");
+                sb.AppendLine("<tbody class=\"operation-status\">\r\n            ");
+
+                foreach (var response in responseMessages)
+                {
+                    sb.AppendLine("<tr>\r\n              ");
+                    sb.AppendLine("<td>");
+                    sb.AppendLine(response.code.ToString());
+                    sb.AppendLine("</td>\r\n              ");
+
+
+                    sb.AppendLine("<td>");
+                    sb.AppendLine(response.message.ToString());
+                    sb.AppendLine("</td>\r\n              ");
+                    sb.AppendLine("</tr>\r\n              ");
+                }
+
+                sb.AppendLine("</tbody>\r\n        ");
+                sb.AppendLine("</div>\r\n          </table>\r\n          ");
+            }
+
             return sb.ToString();
         }
 
@@ -154,6 +181,7 @@ namespace Swagger.Net
         public string summary { get; set; }
         public string notes { get; set; }
         public List<ResourceApiOperationParameter> parameters { get; set; }
+        public List<ResponseMessage> responseMessages;
     }
 
     public class ResourceApiOperationParameter

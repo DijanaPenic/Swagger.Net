@@ -12,7 +12,6 @@ namespace Swagger.Net.WebApi.Controllers
         /// <summary>
         /// Get all of the Tags
         /// </summary>
-        /// <returns></returns>
         public IEnumerable<string> Get()
         {
             return new string[] { "value1", "value2" };
@@ -21,8 +20,6 @@ namespace Swagger.Net.WebApi.Controllers
         /// <summary>
         /// Get a single Tag by it's id
         /// </summary>
-        /// <param name="id"></param>
-        /// <returns></returns>
         public string Get(int id)
         {
             return "value";
@@ -68,6 +65,16 @@ namespace Swagger.Net.WebApi.Controllers
         ///     Remaining essentially unchanged. It was popularised in the 1960s with the release of Letraset sheets containing Lorem Ipsum passages, and more recently with desktop publishing software like Aldus PageMaker including versions of Lorem Ipsum.    
         /// </remarks>
         /// <returns> This function returns status for Put Web API call (For more details please check: http://www.google.com) </returns>
+        /// <responseCodes> 
+        ///     <response>
+        ///         <code>500</code>
+        ///         <message>Internal server errors</message>
+        ///     </response>
+        ///     <response>
+        ///         <code>200</code>
+        ///         <message>Unknown server errors</message>
+        ///     </response>
+        /// </responseCodes>
         public void Put(int id, [FromBody]string value)
         {
         }
